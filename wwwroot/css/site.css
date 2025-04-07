@@ -1,0 +1,37 @@
+#gameContainer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 800px;
+  height: 400px;
+  background-color: #ddd;
+  position: relative;
+  margin: 20px auto;
+  border: 2px solid black;
+}
+
+.character {
+  width: 100px;
+  height: 100px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+#player {
+  background-color: green;
+}
+
+#opponent {
+  background-color: red;
+}
+
+#opponent.glint {
+  background-color: blue;
+}
+
+#opponent.slashing {
+  background-color: red;
+}
+
+#opponent.hitstun {
+  background-color: yellow;
+}
