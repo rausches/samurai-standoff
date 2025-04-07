@@ -1,0 +1,166 @@
+@{
+    ViewData["Title"] = "Samurai Standoff";
+}
+
+<h1>Samurai Standoff</h1>
+
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+
+<p id="statusText">Press Spacebar when the enemy draws!</p>
+
+<a asp-controller="Menu" asp-action="Index">
+    <button>Back to Menu</button>
+</a>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let gameState = "idle";
+        let opponentGlintTime;
+        let roundStartTime;
+        let opponentAttackTimeout;
+
+        let score = 0;
+        let streak = 0;
+        let streakMultiplier = 1;
+
+        function updateScore(reactionTime) {
+            let basePoints = 100;
+            let perfectBonus = reactionTime <= 300 ? 1.5 : 1.0;
+            let totalPoints = basePoints * perfectBonus * streakMultiplier;
+
+            score += Math.floor(totalPoints);
+            document.getElementById("scoreText").textContent = `Score: ${score}`;
+        }
+
+        function updateStreak(win) {
+            if (win) {
+                streak++;
+                if (streak === 2) streakMultiplier = 2;
+                else if (streak === 5) streakMultiplier = 3;
+                else if (streak % 5 === 0 && streak > 5) streakMultiplier++;
+            } else {
+                streak = 0;
+                streakMultiplier = 1;
+                score = 0; // Reset score on loss
+                document.getElementById("scoreText").textContent = `Score: ${score}`;
+            }
+        }
+
+        function drawGameState() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Default colors (idle)
+            let playerColor = "green";
+            let opponentColor = "red";
+
+            if (gameState === "glint") {
+                opponentColor = "blue"; // Opponent preparing to attack
+            }
+
+            if (gameState === "playerGlint") {
+                playerColor = "blue"; // Player preparing to attack
+            }
+
+            if (gameState === "playerSlash") {
+                playerColor = "silver"; // Player slashing
+            }
+
+            if (gameState === "opponentSlash") {
+                opponentColor = "silver"; // Opponent slashing
+            }
+
+            if (gameState === "hitstun") {
+                if (lastWinner === "player") {
+                    opponentColor = "yellow"; // Opponent in hitstun
+                    playerColor = "silver";  // Player slashed successfully
+                } else {
+                    playerColor = "yellow"; // Player in hitstun
+                    opponentColor = "silver"; // Opponent slashed successfully
+                }
+            }
+
+            // Draw player (left side)
+            ctx.fillStyle = playerColor;
+            ctx.fillRect(100, 150, 100, 100);
+
+            // Draw opponent (right side)
+            ctx.fillStyle = opponentColor;
+            ctx.fillRect(600, 150, 100, 100);
+        }
+
+        let lastWinner = null;
+
+        function startNewRound() {
+            gameState = "idle";
+            lastWinner = null; // Reset winner tracking
+            document.getElementById("statusText").textContent = "Get ready...";
+            drawGameState();
+            
+            let delay = Math.floor(Math.random() * 9000) + 1000;
+            roundStartTime = Date.now();
+
+            setTimeout(() => {
+                gameState = "glint"; // Opponent glint phase
+                document.getElementById("statusText").textContent = "DRAW!";
+                opponentGlintTime = Date.now();
+                drawGameState();
+
+                opponentAttackTimeout = setTimeout(() => {
+                    if (gameState === "glint") {
+                        gameState = "opponentSlash"; // Opponent slashes
+                        lastWinner = "opponent"; // Player lost
+                        document.getElementById("statusText").textContent = "Too slow! You lose.";
+                        updateStreak(false);
+                        drawGameState();
+                        setTimeout(() => {
+                            gameState = "hitstun";
+                            drawGameState();
+                            setTimeout(startNewRound, 2000);
+                        }, 500);
+                    }
+                }, 500); // Player has 1 second to react
+            }, delay);
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.code === "Space") {
+                if (gameState === "glint") {
+                    clearTimeout(opponentAttackTimeout);
+                    let reactionTime = Date.now() - opponentGlintTime;
+                    gameState = "playerGlint"; // Player preparing attack
+                    drawGameState();
+
+                    setTimeout(() => {
+                        gameState = "playerSlash"; // Player slashes
+                        lastWinner = "player"; // Player won
+                        document.getElementById("statusText").textContent = `You win! Reaction time: ${reactionTime}ms`;
+
+                        updateScore(reactionTime);
+                        updateStreak(true);
+                        drawGameState();
+
+                        setTimeout(() => {
+                            gameState = "hitstun"; // Opponent gets hit
+                            drawGameState();
+                            setTimeout(startNewRound, 2000);
+                        }, 500);
+                    }, 100); // Small delay for the blue transition
+                } else if (gameState === "idle") {
+                    gameState = "hitstun"; // Player hitstun for reacting too early
+                    lastWinner = "opponent"; // Player lost
+                    document.getElementById("statusText").textContent = "Too soon! You lose.";
+                    updateStreak(false);
+                    drawGameState();
+                    setTimeout(startNewRound, 2000);
+                }
+            }
+        });
+
+        startNewRound();
+    });
+</script>
+
+<p id="scoreText">Score: 0</p>
