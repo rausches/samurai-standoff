@@ -1,2 +1,4 @@
-# samurai-standoff
-This is a side project I came up with to pass time. The idea was to create something with simplistic controls akin to Flappy Bird that puts the player into a "trance." This was also a good opportunity to develop skills drawing pixel art and javascript implementation. 
+# Samurai Standoff
+This is a side project I came up with to pass time. The idea was to create something with simplistic controls akin to Flappy Bird that puts the player into a "trance." This was also a good opportunity to develop skills drawing pixel art and javascript implementation. The plan is to deploy this project as an app for mobile phones and to be fully functional offline.
+
+The controls and goal of this game are simple. The second you see the glint of your enemy's blade is the moment he lets his guard down--and for you to land a devastating counterattack. Defeat as many opponents as possible in a duel-like setting!
